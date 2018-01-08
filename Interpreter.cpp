@@ -217,7 +217,7 @@ void Interpreter::generateCodes(){
         }
 
         bool maxReached = false;///elertuk e a counterrel a max parh muveleteket
-        for (int i = 0; i < roots.size(); ++i) {///vegigmegy az osszes kifejezesi fan; elvegezheto muveletek
+        for (int i = 0; i < roots.size(); ++i) {///vegigmegy az osszes kifejezesi fan (gyokerek->outpu); elvegezheto muveletek
             if (maxReached) {///ha elertuk a max parh muveletek szamat
                 break;
             }
@@ -242,7 +242,7 @@ void Interpreter::generateCodes(){
                 vector<Node*> validNodes;///osszes valid nodeot belerakjuk, akinek mar csak levelei vannak
                 findDistinctValidNodes(roots[i],validNodes);///
                 for (auto node : validNodes) {///vegig a nodokon
-                    if (counter == CONCURRENT_OPERATIONS) {
+                    if (counter == CONCURRENT_OPERATIONS) {///ha tobb a muvelet, mint pmsz
                         maxReached = true;
                         break;
                     } else {
@@ -253,17 +253,17 @@ void Interpreter::generateCodes(){
                     }
                 }
             }
-            if (!maxReached && counter < CONCURRENT_OPERATIONS) { // if a tree has been reduced to a single leaf node
-                if (isLeafNode(roots[i])) {
-                    codeLine += trees[i].getOutput() + "=";
-                    if (trees[i].getRoot()->storage == "Reg" || trees[i].getRoot()->storage == "Mem") {
-                        codeLine += trees[i].getRoot()->storage + "[" + to_string(trees[i].getRoot()->index) + "];";
-                    } else {
-                        codeLine += trees[i].getRoot()->symbol + ";";
-                    }
-                    counter++;
-                }
-            }
+//            if (!maxReached && counter < CONCURRENT_OPERATIONS) { // if a tree has been reduced to a single leaf node
+//                if (isLeafNode(roots[i])) {
+//                    codeLine += trees[i].getOutput() + "=";
+//                    if (trees[i].getRoot()->storage == "Reg" || trees[i].getRoot()->storage == "Mem") {
+//                        codeLine += trees[i].getRoot()->storage + "[" + to_string(trees[i].getRoot()->index) + "];";
+//                    } else {
+//                        codeLine += trees[i].getRoot()->symbol + ";";
+//                    }
+//                    counter++;
+//                }
+//            }
         }
         cout << codeLine << endl;
     }

@@ -123,12 +123,14 @@ bool isFmaNode(Node *i) {
     if (i->type == "operator" && i->symbol == "+") {
         // if left is a register and right is a multiplication:
         if (i->left->storage == "Reg" && i->right->type == "operator" && i->right->symbol == "*") {
+            // todo check: left and right children of the mulitplitation is leaf
             return true;
         }
 
         // if right is a register and left is a multiplication:
         if (i->right->storage == "Reg" && i->left->type == "operator" && i->left->symbol == "*") {
             return true;
+            // todo check: left and right children of the mulitplitation is leaf
         }
     }
     return false;
@@ -147,7 +149,6 @@ void findFmaNodes(Node* i, vector<Node*> &nodes) {
 }
 
 void makeOperation(Node* i, vector<Node*> roots, string &codeLine, vector<Register> & registers, int & memoryAddress, const string &output) {
-    cout << "as" << endl;
     if (find(roots.begin(), roots.end(), i) != roots.end()) {
         codeLine += output + "=";
     } else {
@@ -165,7 +166,6 @@ void makeOperation(Node* i, vector<Node*> roots, string &codeLine, vector<Regist
         }
     }
     if (isLeafNode(i)) {
-        cout << "KEKE" << endl;
         if (i->storage == "Reg" || i->storage == "Mem") {
             codeLine += i->storage + "[" + to_string(i->index) + "];";
         } else {
@@ -203,7 +203,6 @@ void makeOperation(Node* i, vector<Node*> roots, string &codeLine, vector<Regist
         delete(i->right);
         i->right = nullptr;
     }
-//    cout << codeLine << endl;
 }
 
 void makeFma(Node* i, string & codeLine, vector<Register> &registers) {
@@ -293,7 +292,7 @@ bool isLeafNode(Node * i) {
 
 bool isValidNode(Node* i) {
 
-    if (i->left == nullptr || i->right == nullptr) {
+    if (i->left == nullptr && i->right == nullptr) {
         return false;
     }
     // Fma nodes are evaluated beforehand, therefore when we encounter a valid
@@ -329,58 +328,6 @@ void calculateOccurrances(vector<Node*> roots, map<string,int> &operatorMap) {
             operatorMap[v->symbol]++;
         }
         operatorMap["FMA3"] += fmas.size();
-    }
-}
-
-void BinaryExpressionTree::generateMachineCode(
-        vector<Node *> roots,
-        std::vector<utility::Register> &registers,
-        int &memoryAddress,
-        const string &out,
-        const int &MAX_CONCURRENT) {
-
-    string codeLine;
-    string currentOperator;
-    int counter;
-    while (hasNonLeafNode(roots)) {
-        counter = 0;
-        codeLine = "";
-        currentOperator = "";
-        if (MAX_CONCURRENT > 1) {
-            // choose operation to make in simd;
-            map<string,int> operatorMap;
-            operatorMap["+"] = 0;
-            operatorMap["-"] = 0;
-            operatorMap["*"] = 0;
-            operatorMap["/"] = 0;
-            operatorMap["FMA3"] = 0;
-
-            calculateOccurrances(roots, operatorMap);
-
-            // if there is at least MAX_COMCURRENT FMA-s available, then we pick fma
-            if (operatorMap["FMA3"] >= MAX_CONCURRENT) {
-                currentOperator = "FMA3";
-            } else {
-                currentOperator = std::max_element(operatorMap.begin(), operatorMap.end())->second;
-            }
-        }
-        while (counter < MAX_CONCURRENT) {
-            for (auto tree : roots) {
-                reduceTree(tree);
-                vector<Node*> fmaNodes;
-                vector<Node*> validNodes;
-                findFmaNodes(tree, fmaNodes);
-                findDistinctValidNodes(tree,validNodes);
-                for (auto node : fmaNodes) {
-                    if (counter == MAX_CONCURRENT) {
-                        break;
-                    } else {
-                        makeFma(node,codeLine,registers);
-                        counter++;
-                    }
-                }
-            }
-        }
     }
 }
 
