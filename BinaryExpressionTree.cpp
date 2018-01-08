@@ -110,8 +110,8 @@ void reduceTree(Node* i) {
         reduceTree(i->right);
     }
     if (isReducibleNode(i)) {
-        i->type == "literal";
-        i->symbol == "0";
+        i->type = "literal";
+        i->symbol = "0";
         delete(i->left);
         delete(i->right);
         i->left = nullptr;
@@ -147,6 +147,7 @@ void findFmaNodes(Node* i, vector<Node*> &nodes) {
 }
 
 void makeOperation(Node* i, vector<Node*> roots, string &codeLine, vector<Register> & registers, int & memoryAddress, const string &output) {
+    cout << "as" << endl;
     if (find(roots.begin(), roots.end(), i) != roots.end()) {
         codeLine += output + "=";
     } else {
@@ -163,36 +164,45 @@ void makeOperation(Node* i, vector<Node*> roots, string &codeLine, vector<Regist
             memoryAddress++;
         }
     }
-    i->type = "expression";
-    if (i->left->type == "expression") {
-        codeLine += i->left->storage + "[" + to_string(i->left->index) + "]";
-
-        // Freeing up unnecessary register usage if left child used register
-        if (i->left->storage == "Reg") {
-            registers[i->left->index].content = "";
+    if (isLeafNode(i)) {
+        cout << "KEKE" << endl;
+        if (i->storage == "Reg" || i->storage == "Mem") {
+            codeLine += i->storage + "[" + to_string(i->index) + "];";
+        } else {
+            codeLine += i->symbol + ";";
         }
-    }
-    else if (i->left->type == "input" || i->left->type == "literal") {
-        codeLine += i->left->symbol;
-    }
-    codeLine += i->symbol;
-    if (i->right->type == "expression") {
-        codeLine += i->right->storage + "[" + to_string(i->right->index) + "]";
+    } else {
+        i->type = "expression";
+        if (i->left->type == "expression") {
+            codeLine += i->left->storage + "[" + to_string(i->left->index) + "]";
 
-        // Freeing up unnecessary register usage if right child used register
-        if (i->right->storage == "Reg") {
-            registers[i->right->index].content = "";
+            // Freeing up unnecessary register usage if left child used register
+            if (i->left->storage == "Reg") {
+                registers[i->left->index].content = "";
+            }
         }
-    }
-    else if (i->right->type == "input" || i->right->type == "literal") {
-        codeLine += i->right->symbol;
-    }
-    codeLine += ";";
+        else if (i->left->type == "input" || i->left->type == "literal") {
+            codeLine += i->left->symbol;
+        }
+        codeLine += i->symbol;
+        if (i->right->type == "expression") {
+            codeLine += i->right->storage + "[" + to_string(i->right->index) + "]";
 
-    delete(i->left);
-    i->left = nullptr;
-    delete(i->right);
-    i->right = nullptr;
+            // Freeing up unnecessary register usage if right child used register
+            if (i->right->storage == "Reg") {
+                registers[i->right->index].content = "";
+            }
+        }
+        else if (i->right->type == "input" || i->right->type == "literal") {
+            codeLine += i->right->symbol;
+        }
+        codeLine += ";";
+
+        delete(i->left);
+        i->left = nullptr;
+        delete(i->right);
+        i->right = nullptr;
+    }
 //    cout << codeLine << endl;
 }
 

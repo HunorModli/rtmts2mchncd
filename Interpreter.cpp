@@ -181,6 +181,9 @@ bool Interpreter::hasNonLeafNode(vector<Node*> v) {
  *              /,_/      '`-'
  */
 void Interpreter::generateCodes(){
+
+    cout << endl << "Generated code:" << endl;
+
     vector<Node*> roots;
 
     for (auto t: trees) {
@@ -218,8 +221,10 @@ void Interpreter::generateCodes(){
             if (maxReached) {
                 break;
             }
-//            reduceTree(tree); // todo: nem működik még
 //            this->testTree();
+            reduceTree(roots[i]);
+//            this->testTree();
+//            return;
             // if we have fma as our target operation we make fma
             if (currentOperator == "FMA3") {
                 vector<Node*> fmaNodes;
@@ -248,32 +253,21 @@ void Interpreter::generateCodes(){
                     }
                 }
             }
+            if (!maxReached && counter < CONCURRENT_OPERATIONS) { // if a tree has been reduced to a single leaf node
+                if (isLeafNode(roots[i])) {
+                    codeLine += trees[i].getOutput() + "=";
+                    if (trees[i].getRoot()->storage == "Reg" || trees[i].getRoot()->storage == "Mem") {
+                        codeLine += trees[i].getRoot()->storage + "[" + to_string(trees[i].getRoot()->index) + "];";
+                    } else {
+                        codeLine += trees[i].getRoot()->symbol + ";";
+                    }
+                    counter++;
+                }
+            }
         }
         cout << codeLine << endl;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void Interpreter::freeUpMemory() {
     for (auto t : trees) {

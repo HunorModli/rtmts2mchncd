@@ -9,14 +9,13 @@ int main() {
     i.tokenizeRawCommands();
     i.commandToRpn();
     i.buildExpressionTrees();
-    i.generateCode();
-    cout << endl << "OPTIMIZED CODE:" << endl;
+//    i.generateCode();
+//    cout << endl << "OPTIMIZED CODE:" << endl;
     i.generateCodes();
     // These can be commented out:
     // i.evalTree(); // evaluates the expressions in a postorder manner
 //    i.testTree(); // pretty prints the expression trees
 
-    // DO NOT COMMENT OUT THIS LINE!
 //    i.freeUpMemory();
     // jndskjfnsx
 }
