@@ -118,7 +118,7 @@ namespace utility {
         return -1;
     }
 
-    string findMaxInMap(map<string,int> m) {
+    string findMaxInMap(map<string,int> m) {///fma-t fogja maximumnak talalni
         int max = 0;
         string s = "undefined";
         for (auto i : m) {

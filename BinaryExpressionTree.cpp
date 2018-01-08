@@ -323,8 +323,8 @@ void calculateOccurrances(vector<Node*> roots, map<string,int> &operatorMap) {
     for (auto r : roots) {
         vector<Node*> valids;
         vector<Node*> fmas;
-        findDistinctValidNodes(r,valids);
-        findFmaNodes(r,fmas);
+        findDistinctValidNodes(r,valids);///megtalalja azokat, ahol van muvelet és bal és jobb oldalt is van gyerek
+        findFmaNodes(r,fmas);///fma kepes nodok megtalalasa (fma csak regiszter); szorzas(ket valamivel) es osszeadas, aminek egyike valami masika a szorzas
         for (auto v : valids) {
             operatorMap[v->symbol]++;
         }

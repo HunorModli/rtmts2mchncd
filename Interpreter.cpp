@@ -193,14 +193,14 @@ void Interpreter::generateCodes(){
     string codeLine;
     string currentOperator;
     int counter;
-    while (hasNonLeafNode(roots)) {
-        counter = 0;
-        codeLine = "";
+    while (hasNonLeafNode(roots)) {///
+        counter = 0;///o-tol max parh muveletekig
+        codeLine = "";///ures string->kodsor lesz
         currentOperator = "";
-        map<string,int> operatorMap;
+        map<string,int> operatorMap;///milyen muvelet legyen; osszes fat bejarjuk; osszes elvegezheto muveletet elvegezzuk <muvelet, hanyszor>
         if (CONCURRENT_OPERATIONS > 1) {
             // choose operation to make in simd;
-            operatorMap["FMA3"] = 0;
+            operatorMap["FMA3"] = 0; ///priorizaljuk;
             operatorMap["+"] = 0;
             operatorMap["-"] = 0;
             operatorMap["*"] = 0;
@@ -209,45 +209,45 @@ void Interpreter::generateCodes(){
             calculateOccurrances(roots, operatorMap);
 
             // if there is at least MAX_COMCURRENT FMA-s available, then we pick fma
-            if (operatorMap["FMA3"] >= CONCURRENT_OPERATIONS) {
+            if (operatorMap["FMA3"] >= CONCURRENT_OPERATIONS) {///akkor az operator az fma 3 ha >=parhmuvszam
                 currentOperator = "FMA3";
             } else {
-                currentOperator = findMaxInMap(operatorMap);
+                currentOperator = findMaxInMap(operatorMap);///maxkereses
             }
         }
 
-        bool maxReached = false;
-        for (int i = 0; i < roots.size(); ++i) {
-            if (maxReached) {
+        bool maxReached = false;///elertuk e a counterrel a max parh muveleteket
+        for (int i = 0; i < roots.size(); ++i) {///vegigmegy az osszes kifejezesi fan; elvegezheto muveletek
+            if (maxReached) {///ha elertuk a max parh muveletek szamat
                 break;
             }
 //            this->testTree();
-            reduceTree(roots[i]);
+            reduceTree(roots[i]);///egyszerusitjuk a fat
 //            this->testTree();
 //            return;
             // if we have fma as our target operation we make fma
             if (currentOperator == "FMA3") {
-                vector<Node*> fmaNodes;
+                vector<Node*> fmaNodes;///kivalasztjuk azokat a nodokat, akik fmavalidak (mutato az adott nodera)
                 findFmaNodes(roots[i], fmaNodes);
-                for (auto node : fmaNodes) {
-                    if (counter == CONCURRENT_OPERATIONS) {
+                for (auto node : fmaNodes) {///vegigmegyunk rajtuk
+                    if (counter == CONCURRENT_OPERATIONS) {///elertuk e a maxot?
                         maxReached = true;
-                        break;
+                        break;///kibreakel
                     } else {
-                        makeFma(node,codeLine,registers);
+                        makeFma(node,codeLine,registers);///atadjuk a regisztereket is hogy fel tudjuk oket szabaditani
                         counter++;
                     }
                 }
-            } else {
-                vector<Node*> validNodes;
-                findDistinctValidNodes(roots[i],validNodes);
-                for (auto node : validNodes) {
+            } else {///ha nem fma volt a muveletunk
+                vector<Node*> validNodes;///osszes valid nodeot belerakjuk, akinek mar csak levelei vannak
+                findDistinctValidNodes(roots[i],validNodes);///
+                for (auto node : validNodes) {///vegig a nodokon
                     if (counter == CONCURRENT_OPERATIONS) {
                         maxReached = true;
                         break;
                     } else {
-                        if (node->symbol == currentOperator) {
-                            makeOperation(node, roots, codeLine, registers, currentMemoryAddress,trees[i].getOutput());
+                        if (node->symbol == currentOperator) {///adott muvelet-e(osszeadas)
+                            makeOperation(node, roots, codeLine, registers, currentMemoryAddress,trees[i].getOutput());///megcsinaljuk a muveletet; pl reg2=reg1+mem0
                             counter++;
                         }
                     }
@@ -272,22 +272,5 @@ void Interpreter::generateCodes(){
 void Interpreter::freeUpMemory() {
     for (auto t : trees) {
         t.destroy(t.getRoot());
-    }
-}
-
-void asd () {
-
-    vector<int> v;
-    v.push_back(1);
-    v.push_back(5);
-    v.push_back(4);
-    v.push_back(3);
-
-    for (int j = 0; j < v.size(); ++j) {
-        cout << v[j] << endl;
-    }
-
-    for (auto i : v) {
-        cout << i << endl;
     }
 }
