@@ -1,5 +1,6 @@
 #include <algorithm>
 #include "Interpreter.h"
+#include "BinaryExpressionTree.h"
 
 using namespace utility;
 using namespace std;
@@ -24,6 +25,7 @@ Interpreter::Interpreter(std::string const &filename) {
         cerr << "Malformed input text. Exiting program";
         return;
     }
+
     for (int i = 0; i < REGISTER_COUNT; ++i) {
         Register r(i);
         registers.push_back(r);
@@ -69,7 +71,7 @@ void Interpreter::tokenizeRawCommands() {
 void Interpreter::commandToRpn() {
     vector<Token> opStack;
     vector<Token> output;
-    for (vector<Token> command : this->tokeinzedCommands) {
+    for (vector<Token> command : tokeinzedCommands) {
         opStack.clear(); // just in case, might be useless here - the opStack should be empty after each iteration
         output.clear();
         cout << endl << "EXPRESSION:" << endl << command;
@@ -112,6 +114,7 @@ void Interpreter::commandToRpn() {
                 opStack.pop_back();
             }
         }
+
         while (!opStack.empty()) {
             output.push_back(opStack.back());
             opStack.pop_back();
@@ -121,9 +124,9 @@ void Interpreter::commandToRpn() {
     }
 }
 void Interpreter::buildExpressionTrees() {
-    for (vector<Token> command : rpnCommands) {
-        BinaryExpressionTree tree(command);
-        this->trees.push_back(tree);
+    for (int i = 0; i < rpnCommands.size(); ++i) {
+        BinaryExpressionTree tree(rpnCommands[i], outputVariables[i]);
+        trees.push_back(tree);
     }
 }
 
@@ -150,8 +153,147 @@ void Interpreter::generateCode() {
     }
 }
 
+bool Interpreter::hasNonLeafNode(vector<Node*> v) {
+    bool onlyLeaf = true;
+    for (auto n : v) {
+        if (isLeafNode(n)) onlyLeaf = false;
+        break;
+    }
+    return onlyLeaf;
+}
+
+/*
+ * WARNING: The code that follows may make you cry:
+ *           A Safety Pig has been provided below for your benefit
+ *                              _
+ *      _._ _..._ .-',     _.._(`))
+ *     '-. `     '  /-._.-'    ',/
+ *       )         \            '.
+ *      / _    _    |             \
+ *     |  a    a    /              |
+ *      \   .-.                     ;
+ *       '-('' ).-'       ,'       ;
+ *          '-;           |      .'
+ *            \           \    /
+ *            | 7  .__  _.-\   \
+ *            | |  |  ``/  /`  /
+ *           /,_|  |   /,_/   /
+ *              /,_/      '`-'
+ */
+void Interpreter::generateCodes(){
+    vector<Node*> roots;
+
+    for (auto t: trees) {
+        roots.push_back(t.getRoot());
+    }
+
+    string codeLine;
+    string currentOperator;
+    int counter;
+    while (hasNonLeafNode(roots)) {
+        counter = 0;
+        codeLine = "";
+        currentOperator = "";
+        map<string,int> operatorMap;
+        if (CONCURRENT_OPERATIONS > 1) {
+            // choose operation to make in simd;
+            operatorMap["FMA3"] = 0;
+            operatorMap["+"] = 0;
+            operatorMap["-"] = 0;
+            operatorMap["*"] = 0;
+            operatorMap["/"] = 0;
+
+            calculateOccurrances(roots, operatorMap);
+
+            // if there is at least MAX_COMCURRENT FMA-s available, then we pick fma
+            if (operatorMap["FMA3"] >= CONCURRENT_OPERATIONS) {
+                currentOperator = "FMA3";
+            } else {
+                currentOperator = findMaxInMap(operatorMap);
+            }
+        }
+
+        bool maxReached = false;
+        for (int i = 0; i < roots.size(); ++i) {
+            if (maxReached) {
+                break;
+            }
+//            reduceTree(tree); // todo: nem működik még
+//            this->testTree();
+            // if we have fma as our target operation we make fma
+            if (currentOperator == "FMA3") {
+                vector<Node*> fmaNodes;
+                findFmaNodes(roots[i], fmaNodes);
+                for (auto node : fmaNodes) {
+                    if (counter == CONCURRENT_OPERATIONS) {
+                        maxReached = true;
+                        break;
+                    } else {
+                        makeFma(node,codeLine,registers);
+                        counter++;
+                    }
+                }
+            } else {
+                vector<Node*> validNodes;
+                findDistinctValidNodes(roots[i],validNodes);
+                for (auto node : validNodes) {
+                    if (counter == CONCURRENT_OPERATIONS) {
+                        maxReached = true;
+                        break;
+                    } else {
+                        if (node->symbol == currentOperator) {
+                            makeOperation(node, roots, codeLine, registers, currentMemoryAddress,trees[i].getOutput());
+                            counter++;
+                        }
+                    }
+                }
+            }
+        }
+        cout << codeLine << endl;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void Interpreter::freeUpMemory() {
     for (auto t : trees) {
         t.destroy(t.getRoot());
+    }
+}
+
+void asd () {
+
+    vector<int> v;
+    v.push_back(1);
+    v.push_back(5);
+    v.push_back(4);
+    v.push_back(3);
+
+    for (int j = 0; j < v.size(); ++j) {
+        cout << v[j] << endl;
+    }
+
+    for (auto i : v) {
+        cout << i << endl;
     }
 }

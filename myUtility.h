@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <ostream>
+#include <map>
 
 namespace utility {
 
@@ -38,6 +39,8 @@ namespace utility {
     std::ostream& operator<<(std::ostream& os, const std::vector<std::string>& v);
 
     std::ostream& operator<<(std::ostream& os, const std::vector<Token>& v);
+
+    std::string findMaxInMap(std::map<std::string,int> m);
 }
 
 #endif //MYUTILITY_H

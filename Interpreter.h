@@ -39,6 +39,10 @@ public:
 
     void generateCode();
 
+    void generateCodes();
+
+    bool hasNonLeafNode(std::vector<Node*> v);
+
     void freeUpMemory();
 };
 

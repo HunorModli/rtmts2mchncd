@@ -1,5 +1,6 @@
 #include "myUtility.h"
 #include <algorithm>
+#include <map>
 
 using namespace std;
 
@@ -115,5 +116,17 @@ namespace utility {
             }
         }
         return -1;
+    }
+
+    string findMaxInMap(map<string,int> m) {
+        int max = 0;
+        string s = "undefined";
+        for (auto i : m) {
+            if (i.second > max) {
+                max = i.second;
+                s = i.first;
+            }
+        }
+        return s;
     }
 }
