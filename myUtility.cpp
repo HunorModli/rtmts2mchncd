@@ -1,5 +1,6 @@
 #include "myUtility.h"
 #include <algorithm>
+#include <sstream>
 #include <map>
 
 using namespace std;
@@ -109,14 +110,25 @@ namespace utility {
         return os;
     }
 
-    int findFreeRegister(vector<Register> &r) {
+    int findFreeRegister(std::vector<Register> &r, std::vector<int> registerIndexesInUse) {
         for (Register reg : r) {
-            if (reg.content == "") {
+            if (reg.content == "" && // ha a regiszter üres, és nincs benne a registerIndexesInUse-ban:
+                std::find(registerIndexesInUse.begin(), registerIndexesInUse.end(),reg.number) == registerIndexesInUse.end()) {
                 return reg.number;
             }
         }
         return -1;
     }
+
+//    int findFreeRegister(vector<Register> &r,  vector<int> &registerIndexesInUse) {
+//        for (Register reg : r) {
+//            if (reg.content == "" && // ha a regiszter üres, és nincs benne a registerIndexesInUse-ban:
+//                    std::find(registerIndexesInUse.begin(), registerIndexesInUse.end(),reg.number) == registerIndexesInUse.end()) {
+//                return reg.number;
+//            }
+//        }
+//        return -1;
+//    }
 
     string findMaxInMap(map<string,int> m) {
         int max = 0;
@@ -129,4 +141,13 @@ namespace utility {
         }
         return s;
     }
+
+    int stoi(string s) {
+        stringstream ss;
+        ss << s;
+        int a;
+        ss >> a;
+        return a;
+    }
+
 }

@@ -59,10 +59,10 @@ public:
 
     std::string eval(Node *i);
 
-    void generateMachineCode(Node *i, std::vector<utility::Register> &registers, int &m, const std::string &out);
-
-    void generateMachineCode(std::vector<Node *> roots, std::vector<utility::Register> &registers, int &m,
-                             const std::string &out, const int &MAX_CONCURRENT);
+//    void generateMachineCode(Node *i, std::vector<utility::Register> &registers, int &m, const std::string &out);
+//
+//    void generateMachineCode(std::vector<Node *> roots, std::vector<utility::Register> &registers, int &m,
+//                             const std::string &out, const int &MAX_CONCURRENT);
 
     int maxHeight(Node *i);
 
@@ -85,9 +85,9 @@ bool isReducibleNode(Node *n);
 
 bool hasNonLeafNode(std::vector<Node *> v);
 
-void makeFma(Node *i, std::string &codeLine, std::vector<utility::Register> &registers);
+void makeFma(Node *i, std::string &codeLine, std::vector<utility::Register> &registers, std::vector<int> &registerIndexesInUse);
 
-void makeOperation(Node* i, std::vector<Node*> roots, std::string &codeLine, std::vector<utility::Register> & registers, int & memoryAddress, const std::string &output);
+void makeOperation(Node* i, std::vector<Node*> roots, std::string &codeLine, std::vector<utility::Register> & registers, int & memoryAddress, const std::string &output, std::vector<int> &registerIndexesInUse);
 
 void calculateOccurrances(std::vector<Node *> roots, std::map<std::string, int> &operatorMap);
 

@@ -11,11 +11,10 @@ int main() {
     i.buildExpressionTrees();
 //    i.generateCode();
 //    cout << endl << "OPTIMIZED CODE:" << endl;
+//    i.testTree(); // pretty prints the expression trees
     i.generateCodes();
     // These can be commented out:
     // i.evalTree(); // evaluates the expressions in a postorder manner
-//    i.testTree(); // pretty prints the expression trees
 
 //    i.freeUpMemory();
-    // jndskjfnsx
 }

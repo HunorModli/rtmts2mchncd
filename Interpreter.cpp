@@ -149,37 +149,35 @@ void Interpreter::generateCode() {
 
     for (int i = 0; i < trees.size(); ++i) {
         BinaryExpressionTree tree = trees[i];
-        trees[i].generateMachineCode(trees[i].getRoot(), registers, currentMemoryAddress, outputVariables[i]);
+//        trees[i].generateMachineCode(trees[i].getRoot(), registers, currentMemoryAddress, outputVariables[i]);
     }
 }
 
 bool Interpreter::hasNonLeafNode(vector<Node*> v) {
     bool onlyLeaf = true;
     for (auto n : v) {
-        if (isLeafNode(n)) onlyLeaf = false;
-        break;
+        cout << "ROOT NODE TEST" << endl << n->type << ":" << n->symbol << endl;
+        if (!isLeafNode(n)) {
+            cout << "Root is leaf node" << endl;
+            onlyLeaf = false;
+            break;
+        }
     }
+    cout << endl;
     return onlyLeaf;
 }
 
-/*
- * WARNING: The code that follows may make you cry:
- *           A Safety Pig has been provided below for your benefit
- *                              _
- *      _._ _..._ .-',     _.._(`))
- *     '-. `     '  /-._.-'    ',/
- *       )         \            '.
- *      / _    _    |             \
- *     |  a    a    /              |
- *      \   .-.                     ;
- *       '-('' ).-'       ,'       ;
- *          '-;           |      .'
- *            \           \    /
- *            | 7  .__  _.-\   \
- *            | |  |  ``/  /`  /
- *           /,_|  |   /,_/   /
- *              /,_/      '`-'
- */
+bool Interpreter::allLeafNodes(std::vector<Node*> v) {
+    bool allLeaf = true;
+    for (auto n : v) {
+        if (!isLeafNode(n)) {
+            allLeaf = false;
+            break;
+        }
+    }
+    return allLeaf;
+}
+
 void Interpreter::generateCodes(){
 
     cout << endl << "Generated code:" << endl;
@@ -193,10 +191,15 @@ void Interpreter::generateCodes(){
     string codeLine;
     string currentOperator;
     int counter;
-    while (hasNonLeafNode(roots)) {
+
+    vector<int>registerIndexesInUse;
+//    while (hasNonLeafNode(roots)) {
+    while (!allLeafNodes(roots)) {
         counter = 0;
         codeLine = "";
         currentOperator = "";
+        registerIndexesInUse.clear();
+
         map<string,int> operatorMap;
         if (CONCURRENT_OPERATIONS > 1) {
             // choose operation to make in simd;
@@ -217,6 +220,7 @@ void Interpreter::generateCodes(){
         }
 
         bool maxReached = false;
+
         for (int i = 0; i < roots.size(); ++i) {
             if (maxReached) {
                 break;
@@ -234,9 +238,10 @@ void Interpreter::generateCodes(){
                         maxReached = true;
                         break;
                     } else {
-                        makeFma(node,codeLine,registers);
+                        makeFma(node,codeLine,registers, registerIndexesInUse);
                         counter++;
                     }
+//                    delete(node);
                 }
             } else {
                 vector<Node*> validNodes;
@@ -247,47 +252,23 @@ void Interpreter::generateCodes(){
                         break;
                     } else {
                         if (node->symbol == currentOperator) {
-                            makeOperation(node, roots, codeLine, registers, currentMemoryAddress,trees[i].getOutput());
+                            makeOperation(node, roots, codeLine, registers, currentMemoryAddress,trees[i].getOutput(), registerIndexesInUse);
                             counter++;
                         }
                     }
-                }
-            }
-            if (!maxReached && counter < CONCURRENT_OPERATIONS) { // if a tree has been reduced to a single leaf node
-                if (isLeafNode(roots[i])) {
-                    codeLine += trees[i].getOutput() + "=";
-                    if (trees[i].getRoot()->storage == "Reg" || trees[i].getRoot()->storage == "Mem") {
-                        codeLine += trees[i].getRoot()->storage + "[" + to_string(trees[i].getRoot()->index) + "];";
-                    } else {
-                        codeLine += trees[i].getRoot()->symbol + ";";
-                    }
-                    counter++;
+//                    delete(node);
                 }
             }
         }
         cout << codeLine << endl;
+    }
+    for (auto n: roots) {
+        delete(n);
     }
 }
 
 void Interpreter::freeUpMemory() {
     for (auto t : trees) {
         t.destroy(t.getRoot());
-    }
-}
-
-void asd () {
-
-    vector<int> v;
-    v.push_back(1);
-    v.push_back(5);
-    v.push_back(4);
-    v.push_back(3);
-
-    for (int j = 0; j < v.size(); ++j) {
-        cout << v[j] << endl;
-    }
-
-    for (auto i : v) {
-        cout << i << endl;
     }
 }

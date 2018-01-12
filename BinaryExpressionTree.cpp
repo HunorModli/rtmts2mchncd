@@ -146,13 +146,14 @@ void findFmaNodes(Node* i, vector<Node*> &nodes) {
     }
 }
 
-void makeOperation(Node* i, vector<Node*> roots, string &codeLine, vector<Register> & registers, int & memoryAddress, const string &output) {
-    cout << "as" << endl;
+void makeOperation(Node* i, vector<Node*> roots, string &codeLine, vector<Register> & registers, int & memoryAddress, const string &output, vector<int> &registerIndexesInUse) {
     if (find(roots.begin(), roots.end(), i) != roots.end()) {
         codeLine += output + "=";
     } else {
-        int regNumber = findFreeRegister(registers);
+        int regNumber = utility::findFreeRegister(registers, registerIndexesInUse);
+//        int regNumber = findFreeRegister(registers, registerIndexesInUse);
         if (regNumber != -1) {
+            registerIndexesInUse.push_back(regNumber);
             registers[regNumber].content = "expr";
             codeLine += "Reg[" + to_string(regNumber) + "]=";
             i->storage = "Reg";
@@ -178,6 +179,7 @@ void makeOperation(Node* i, vector<Node*> roots, string &codeLine, vector<Regist
 
             // Freeing up unnecessary register usage if left child used register
             if (i->left->storage == "Reg") {
+                registerIndexesInUse.push_back(i->left->index);
                 registers[i->left->index].content = "";
             }
         }
@@ -190,6 +192,7 @@ void makeOperation(Node* i, vector<Node*> roots, string &codeLine, vector<Regist
 
             // Freeing up unnecessary register usage if right child used register
             if (i->right->storage == "Reg") {
+                registerIndexesInUse.push_back(i->left->index);
                 registers[i->right->index].content = "";
             }
         }
@@ -206,7 +209,7 @@ void makeOperation(Node* i, vector<Node*> roots, string &codeLine, vector<Regist
 //    cout << codeLine << endl;
 }
 
-void makeFma(Node* i, string & codeLine, vector<Register> &registers) {
+void makeFma(Node* i, string & codeLine, vector<Register> &registers, vector<int> &registerIndexesInUse) {
 
     // if left is a register, right is a multiplication
     if (i->left->storage == "Reg" && i->right->type == "operator" && i->right->symbol == "*") {
@@ -234,9 +237,11 @@ void makeFma(Node* i, string & codeLine, vector<Register> &registers) {
 
         // free up registers
         if (i->right->left->storage == "Reg") {
+            registerIndexesInUse.push_back(i->right->left->index);
             registers[i->right->left->index].content = "";
         }
         if (i->right->right->storage == "Reg") {
+            registerIndexesInUse.push_back(i->right->right->index);
             registers[i->right->right->index].content = "";
         }
 
@@ -272,9 +277,11 @@ void makeFma(Node* i, string & codeLine, vector<Register> &registers) {
 
         // free up registers
         if (i->left->left->storage == "Reg") {
+            registerIndexesInUse.push_back(i->left->left->index);
             registers[i->left->left->index].content = "";
         }
         if (i->left->right->storage == "Reg") {
+            registerIndexesInUse.push_back(i->left->right->index);
             registers[i->left->right->index].content = "";
         }
 
@@ -332,110 +339,110 @@ void calculateOccurrances(vector<Node*> roots, map<string,int> &operatorMap) {
     }
 }
 
-void BinaryExpressionTree::generateMachineCode(
-        vector<Node *> roots,
-        std::vector<utility::Register> &registers,
-        int &memoryAddress,
-        const string &out,
-        const int &MAX_CONCURRENT) {
+//void BinaryExpressionTree::generateMachineCode(
+//        vector<Node *> roots,
+//        std::vector<utility::Register> &registers,
+//        int &memoryAddress,
+//        const string &out,
+//        const int &MAX_CONCURRENT) {
+//
+//    string codeLine;
+//    string currentOperator;
+//    int counter;
+//    while (hasNonLeafNode(roots)) {
+//        counter = 0;
+//        codeLine = "";
+//        currentOperator = "";
+//        if (MAX_CONCURRENT > 1) {
+//            // choose operation to make in simd;
+//            map<string,int> operatorMap;
+//            operatorMap["+"] = 0;
+//            operatorMap["-"] = 0;
+//            operatorMap["*"] = 0;
+//            operatorMap["/"] = 0;
+//            operatorMap["FMA3"] = 0;
+//
+//            calculateOccurrances(roots, operatorMap);
+//
+//            // if there is at least MAX_COMCURRENT FMA-s available, then we pick fma
+//            if (operatorMap["FMA3"] >= MAX_CONCURRENT) {
+//                currentOperator = "FMA3";
+//            } else {
+//                currentOperator = std::max_element(operatorMap.begin(), operatorMap.end())->second;
+//            }
+//        }
+//        while (counter < MAX_CONCURRENT) {
+//            for (auto tree : roots) {
+//                reduceTree(tree);
+//                vector<Node*> fmaNodes;
+//                vector<Node*> validNodes;
+//                findFmaNodes(tree, fmaNodes);
+//                findDistinctValidNodes(tree,validNodes);
+//                for (auto node : fmaNodes) {
+//                    if (counter == MAX_CONCURRENT) {
+//                        break;
+//                    } else {
+//                        makeFma(node,codeLine,registers);
+//                        counter++;
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
-    string codeLine;
-    string currentOperator;
-    int counter;
-    while (hasNonLeafNode(roots)) {
-        counter = 0;
-        codeLine = "";
-        currentOperator = "";
-        if (MAX_CONCURRENT > 1) {
-            // choose operation to make in simd;
-            map<string,int> operatorMap;
-            operatorMap["+"] = 0;
-            operatorMap["-"] = 0;
-            operatorMap["*"] = 0;
-            operatorMap["/"] = 0;
-            operatorMap["FMA3"] = 0;
-
-            calculateOccurrances(roots, operatorMap);
-
-            // if there is at least MAX_COMCURRENT FMA-s available, then we pick fma
-            if (operatorMap["FMA3"] >= MAX_CONCURRENT) {
-                currentOperator = "FMA3";
-            } else {
-                currentOperator = std::max_element(operatorMap.begin(), operatorMap.end())->second;
-            }
-        }
-        while (counter < MAX_CONCURRENT) {
-            for (auto tree : roots) {
-                reduceTree(tree);
-                vector<Node*> fmaNodes;
-                vector<Node*> validNodes;
-                findFmaNodes(tree, fmaNodes);
-                findDistinctValidNodes(tree,validNodes);
-                for (auto node : fmaNodes) {
-                    if (counter == MAX_CONCURRENT) {
-                        break;
-                    } else {
-                        makeFma(node,codeLine,registers);
-                        counter++;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void BinaryExpressionTree::generateMachineCode(Node *i, std::vector<utility::Register> &registers, int &memoryAddress, const string &out) {
-    if (i->left == nullptr && i->right == nullptr) {
-        return;
-    }
-
-    generateMachineCode(i->left, registers, memoryAddress, out);
-    generateMachineCode(i->right, registers, memoryAddress, out);
-    string codeLine = "";
-
-    if (i == root) {
-        codeLine += out + "=";
-    } else {
-        int regNumber = findFreeRegister(registers);
-        if (regNumber != -1) {
-            registers[regNumber].content = "expr";
-            codeLine += "Reg[" + to_string(regNumber) + "]=";
-            i->storage = "Reg";
-            i->index = regNumber;
-        } else { // there is no registers, so we use memory
-            codeLine += "Mem[" + to_string(memoryAddress) + "]=";
-            i->storage = "Mem";
-            i->index = memoryAddress;
-            memoryAddress++;
-        }
-    }
-    i->type = "expression";
-    if (i->left->type == "expression") {
-        codeLine += i->left->storage + "[" + to_string(i->left->index) + "]";
-
-        // Freeing up unnecessary register usage if left child used register
-        if (i->left->storage == "Reg") {
-            registers[i->left->index].content = "";
-        }
-    }
-    else if (i->left->type == "input" || i->left->type == "literal") {
-        codeLine += i->left->symbol;
-    }
-    codeLine += i->symbol;
-    if (i->right->type == "expression") {
-        codeLine += i->right->storage + "[" + to_string(i->right->index) + "]";
-
-        // Freeing up unnecessary register usage if right child used register
-        if (i->right->storage == "Reg") {
-            registers[i->right->index].content = "";
-        }
-    }
-    else if (i->right->type == "input" || i->right->type == "literal") {
-        codeLine += i->right->symbol;
-    }
-    codeLine += ";";
-    cout << codeLine << endl;
-}
+//void BinaryExpressionTree::generateMachineCode(Node *i, std::vector<utility::Register> &registers, int &memoryAddress, const string &out) {
+//    if (i->left == nullptr && i->right == nullptr) {
+//        return;
+//    }
+//
+//    generateMachineCode(i->left, registers, memoryAddress, out);
+//    generateMachineCode(i->right, registers, memoryAddress, out);
+//    string codeLine = "";
+//
+//    if (i == root) {
+//        codeLine += out + "=";
+//    } else {
+//        int regNumber = findFreeRegister(registers);
+//        if (regNumber != -1) {
+//            registers[regNumber].content = "expr";
+//            codeLine += "Reg[" + to_string(regNumber) + "]=";
+//            i->storage = "Reg";
+//            i->index = regNumber;
+//        } else { // there is no registers, so we use memory
+//            codeLine += "Mem[" + to_string(memoryAddress) + "]=";
+//            i->storage = "Mem";
+//            i->index = memoryAddress;
+//            memoryAddress++;
+//        }
+//    }
+//    i->type = "expression";
+//    if (i->left->type == "expression") {
+//        codeLine += i->left->storage + "[" + to_string(i->left->index) + "]";
+//
+//        // Freeing up unnecessary register usage if left child used register
+//        if (i->left->storage == "Reg") {
+//            registers[i->left->index].content = "";
+//        }
+//    }
+//    else if (i->left->type == "input" || i->left->type == "literal") {
+//        codeLine += i->left->symbol;
+//    }
+//    codeLine += i->symbol;
+//    if (i->right->type == "expression") {
+//        codeLine += i->right->storage + "[" + to_string(i->right->index) + "]";
+//
+//        // Freeing up unnecessary register usage if right child used register
+//        if (i->right->storage == "Reg") {
+//            registers[i->right->index].content = "";
+//        }
+//    }
+//    else if (i->right->type == "input" || i->right->type == "literal") {
+//        codeLine += i->right->symbol;
+//    }
+//    codeLine += ";";
+//    cout << codeLine << endl;
+//}
 
 string BinaryExpressionTree::eval(Node *i) { // function not needed in the final version
 

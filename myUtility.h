@@ -30,7 +30,9 @@ namespace utility {
 
     bool isRightParenthesis(std::string s);
 
-    int findFreeRegister(std::vector<Register> &r);
+    int findFreeRegister(std::vector<Register> &r, std::vector<int> registerIndexesInUse);
+
+    int stoi(std::string s);
 
     std::vector<std::string> split(std::string str, const char &separator);
 

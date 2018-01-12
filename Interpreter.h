@@ -43,6 +43,8 @@ public:
 
     bool hasNonLeafNode(std::vector<Node*> v);
 
+    bool allLeafNodes(std::vector<Node*> v);
+
     void freeUpMemory();
 };
 
